@@ -1,6 +1,7 @@
 package terminfo
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 )
@@ -156,14 +157,16 @@ func parseStr(r *Reader, nOffset, stSize int, ti *Terminfo) error {
 			continue
 		}
 
-		s, err := getStr(st, offset)
-		if err != nil {
-			return err
+		idx := bytes.IndexByte(st[offset:], 0)
+		if idx == -1 {
+			return errors.New("illegal string val")
 		}
-		if s == nil {
-			return errors.New("string val is empty")
+
+		if idx == 0 {
+			return errors.New("str val is empty")
 		}
-		ti.strs[i] = s
+
+		ti.strs[i] = st[offset : offset+idx]
 	}
 	return nil
 }
@@ -308,7 +311,7 @@ func parseExtStrAndNames(r *Reader, cbool, cnum, cstr, stSize int, ti *Terminfo)
 
 func parseExtStr(offsets []int, st []byte, ti *Terminfo) (int, error) {
 	ti.extStrs = make([][]byte, len(offsets))
-	lidx := 0
+	idx := 0
 
 	for i := 0; i < len(offsets); i++ {
 		offset := offsets[i]
@@ -319,18 +322,19 @@ func parseExtStr(offsets []int, st []byte, ti *Terminfo) (int, error) {
 			continue
 		}
 
-		s, idx, err := getStrAndIdx(st, offset)
-		if err != nil {
-			return 0, err
-		}
-		if s == nil {
-			return 0, errors.New("ext string val is empty")
+		idx = bytes.IndexByte(st[offset:], 0)
+		if idx == -1 {
+			return 0, errors.New("illegal ext string")
 		}
 
-		ti.extStrs[i] = s
-		lidx = idx
+		if idx == 0 {
+			return 0, errors.New("ext str val is empty")
+		}
+
+		idx += offset
+		ti.extStrs[i] = st[offset:idx]
 	}
-	return lidx, nil
+	return idx, nil
 }
 
 func parseExtNames(offsets []int, st []byte) (map[string]int, error) {
@@ -340,13 +344,17 @@ func parseExtNames(offsets []int, st []byte) (map[string]int, error) {
 		if offset < 0 {
 			return nil, fmt.Errorf("illegal ext name offset: %d", offset)
 		}
-		b, err := getStr(st, offset)
-		if err != nil {
-			return nil, err
+
+		idx := bytes.IndexByte(st[offset:], 0)
+		if idx == -1 {
+			return nil, errors.New("illegal ext names")
 		}
-		if b == nil {
+
+		if idx == 0 {
 			return nil, errors.New("ext name is empty")
 		}
+
+		b := st[offset : offset+idx]
 		names[string(b)] = i
 	}
 	return names, nil
