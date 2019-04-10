@@ -18,14 +18,14 @@ func main() {
 		log.Fatal(err)
 	}
 
-	err = ti.ColorFg(terminfo.Red)
+	err = ti.ColorFg(terminfo.ColorYellow)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	fmt.Println("hello")
+	fmt.Print("hello ")
 
-	err = ti.ColorReset()
+	err = ti.ColorFg(terminfo.ColorBlue)
 	if err != nil {
 		log.Fatal(err)
 	}

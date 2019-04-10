@@ -7,20 +7,35 @@ import (
 	"io"
 )
 
+var (
+	dvars [26]interface{}
+	svars [26]interface{}
+)
+
+func (ti *Terminfo) Fmt(cap int, a ...interface{}) ([]byte, error) {
+	b, ok := ti.GetStr(cap)
+	if !ok {
+		return nil, ErrCapAbsent
+	}
+
+	b, err := Fmt(b, a...)
+	if err == io.EOF {
+		err = ErrCapEscapeSeq
+	}
+	return b, err
+}
+
 // https://invisible-island.net/ncurses/man/terminfo.5.html#h3-Parameterized-Strings
 func Fmt(format []byte, params ...interface{}) ([]byte, error) {
 	in := bytes.NewReader(format)
-	out := new(bytes.Buffer)
-
+	out := bytes.NewBuffer(nil)
 	stack := newStack()
-	var dvars [26]interface{}
-	var svars [26]interface{}
 
 	for {
 		b, err := in.ReadByte()
 		if err == io.EOF {
 			if !stack.isEmpty() {
-				return nil, errors.New("stack not empty") // TODO ignore it?
+				return nil, errStackNotEmpty
 			}
 			return out.Bytes(), nil
 		}
@@ -46,7 +61,7 @@ func Fmt(format []byte, params ...interface{}) ([]byte, error) {
 			out.WriteByte(b)
 
 		case 'c':
-			n, err := stack.popN()
+			n, err := stack.popI()
 			if err != nil {
 				return nil, err
 			}
@@ -58,11 +73,11 @@ func Fmt(format []byte, params ...interface{}) ([]byte, error) {
 				return nil, err
 			}
 			if b < '1' || b > '9' {
-				return nil, errors.New("%p[1-9]")
+				return nil, errors.New("illegal escape sequence: %p[1-9]")
 			}
 			i := b - '1'
 			if int(i) >= len(params) {
-				return nil, errors.New("%p[1-9] illegal param")
+				return nil, errors.New("illegal escape sequence: %p[1-9], illegal param idx")
 			}
 			stack.push(params[i])
 
@@ -71,17 +86,17 @@ func Fmt(format []byte, params ...interface{}) ([]byte, error) {
 			if err != nil {
 				return nil, err
 			}
-			v, err := stack.pop()
+			e, err := stack.pop()
 			if err != nil {
 				return nil, err
 			}
 
 			if b >= 'a' && b <= 'z' {
-				dvars[b-'a'] = v
+				dvars[b-'a'] = e
 			} else if b >= 'A' && b <= 'Z' {
-				svars[b-'A'] = v
+				svars[b-'A'] = e
 			}
-			return nil, errors.New("%P[a-z] / %P[A-Z]")
+			return nil, errors.New("illegal escape sequence: %P[a-z|A-Z]")
 
 		case 'g':
 			b, err = in.ReadByte()
@@ -93,7 +108,7 @@ func Fmt(format []byte, params ...interface{}) ([]byte, error) {
 			} else if b >= 'A' && b <= 'Z' {
 				stack.push(svars[b-'A'])
 			}
-			return nil, errors.New("%g[a-z] / %g[A-Z]")
+			return nil, errors.New("illegal escape sequence: %g[a-z|A-Z]")
 
 		case '\'':
 			b, err = in.ReadByte()
@@ -105,7 +120,7 @@ func Fmt(format []byte, params ...interface{}) ([]byte, error) {
 				return nil, err
 			}
 			if q != '\'' {
-				return nil, errors.New("%'c'")
+				return nil, errors.New("illegal escape sequence: %'c'")
 			}
 			stack.push(int(b))
 
@@ -122,7 +137,7 @@ func Fmt(format []byte, params ...interface{}) ([]byte, error) {
 				}
 
 				if b < '0' || b > '9' {
-					return nil, errors.New("%{nn}")
+					return nil, errors.New("illegal escape sequence: %{nn}")
 				}
 
 				n *= 10
@@ -138,63 +153,63 @@ func Fmt(format []byte, params ...interface{}) ([]byte, error) {
 			stack.push(len(s))
 
 		case '+':
-			n1, n2, err := stack.popN2()
+			n1, n2, err := stack.popII()
 			if err != nil {
 				return nil, err
 			}
 			stack.push(n1 + n2)
 
 		case '-':
-			n1, n2, err := stack.popN2()
+			n1, n2, err := stack.popII()
 			if err != nil {
 				return nil, err
 			}
 			stack.push(n2 - n1)
 
 		case '*':
-			n1, n2, err := stack.popN2()
+			n1, n2, err := stack.popII()
 			if err != nil {
 				return nil, err
 			}
 			stack.push(n1 * n2)
 
 		case '/':
-			n1, n2, err := stack.popN2()
+			n1, n2, err := stack.popII()
 			if err != nil {
 				return nil, err
 			}
 			stack.push(n2 / n1)
 
 		case 'm':
-			n1, n2, err := stack.popN2()
+			n1, n2, err := stack.popII()
 			if err != nil {
 				return nil, err
 			}
 			stack.push(n2 % n1)
 
 		case '&':
-			n1, n2, err := stack.popN2()
+			n1, n2, err := stack.popII()
 			if err != nil {
 				return nil, err
 			}
 			stack.push(n1 & n2)
 
 		case '|':
-			n1, n2, err := stack.popN2()
+			n1, n2, err := stack.popII()
 			if err != nil {
 				return nil, err
 			}
 			stack.push(n1 | n2)
 
 		case '^':
-			n1, n2, err := stack.popN2()
+			n1, n2, err := stack.popII()
 			if err != nil {
 				return nil, err
 			}
 			stack.push(n1 ^ n2)
 
 		case '=':
-			n1, n2, err := stack.popN2()
+			n1, n2, err := stack.popII()
 			if err != nil {
 				return nil, err
 			}
@@ -205,7 +220,7 @@ func Fmt(format []byte, params ...interface{}) ([]byte, error) {
 			}
 
 		case '<':
-			n1, n2, err := stack.popN2()
+			n1, n2, err := stack.popII()
 			if err != nil {
 				return nil, err
 			}
@@ -216,7 +231,7 @@ func Fmt(format []byte, params ...interface{}) ([]byte, error) {
 			}
 
 		case '>':
-			n1, n2, err := stack.popN2()
+			n1, n2, err := stack.popII()
 			if err != nil {
 				return nil, err
 			}
@@ -227,7 +242,7 @@ func Fmt(format []byte, params ...interface{}) ([]byte, error) {
 			}
 
 		case 'A':
-			n1, n2, err := stack.popN2()
+			n1, n2, err := stack.popII()
 			if err != nil {
 				return nil, err
 			}
@@ -238,7 +253,7 @@ func Fmt(format []byte, params ...interface{}) ([]byte, error) {
 			}
 
 		case 'O':
-			n1, n2, err := stack.popN2()
+			n1, n2, err := stack.popII()
 			if err != nil {
 				return nil, err
 			}
@@ -249,7 +264,7 @@ func Fmt(format []byte, params ...interface{}) ([]byte, error) {
 			}
 
 		case '!':
-			n, err := stack.popN()
+			n, err := stack.popI()
 			if err != nil {
 				return nil, err
 			}
@@ -261,7 +276,7 @@ func Fmt(format []byte, params ...interface{}) ([]byte, error) {
 			}
 
 		case '~':
-			n, err := stack.popN()
+			n, err := stack.popI()
 			if err != nil {
 				return nil, err
 			}
@@ -269,17 +284,17 @@ func Fmt(format []byte, params ...interface{}) ([]byte, error) {
 
 		case 'i':
 			if len(params) < 2 {
-				return nil, errors.New("&i")
+				return nil, errors.New("illegal escape sequence: %i")
 			}
 
 			n1, ok := params[0].(int)
 			if !ok {
-				return nil, errors.New("&i")
+				return nil, errors.New("illegal escape sequence: %i")
 			}
 
 			n2, ok := params[1].(int)
 			if !ok {
-				return nil, errors.New("&i")
+				return nil, errors.New("illegal escape sequence: %i")
 			}
 
 			params[0] = n1 + 1
@@ -288,7 +303,7 @@ func Fmt(format []byte, params ...interface{}) ([]byte, error) {
 		case '?':
 			// nop
 		case 't':
-			n, err := stack.popN()
+			n, err := stack.popI()
 			if err != nil {
 				return nil, err
 			}
@@ -369,32 +384,30 @@ func Fmt(format []byte, params ...interface{}) ([]byte, error) {
 			// nop
 
 		default:
-			format, c, err := parseFormat(b, in)
+			f, b, err := parseVerb(b, in)
 			if err != nil {
 				return nil, err
 			}
 
-			if c == 's' {
+			if b == 's' {
 				s, err := stack.popS()
 				if err != nil {
 					return nil, err
 				}
-				s = fmt.Sprintf(format, s)
-				out.WriteString(s)
+				out.WriteString(fmt.Sprintf(f, s))
 			} else {
-				n, err := stack.popN()
+				n, err := stack.popI()
 				if err != nil {
 					return nil, err
 				}
-				s := fmt.Sprintf(format, n)
-				out.WriteString(s)
+				out.WriteString(fmt.Sprintf(f, n))
 			}
 		}
 	}
 }
 
-func parseFormat(b byte, in io.ByteReader) (string, byte, error) {
-	buf := new(bytes.Buffer)
+func parseVerb(b byte, in io.ByteReader) (string, byte, error) {
+	buf := bytes.NewBuffer(nil)
 	buf.WriteByte('%')
 
 	var err error
@@ -402,7 +415,7 @@ func parseFormat(b byte, in io.ByteReader) (string, byte, error) {
 		switch b {
 		case ':':
 			if buf.Len() > 0 {
-				return "", 0, errors.New("illegal format")
+				return "", 0, errors.New("illegal escape sequence: verb")
 			}
 		case '-', '+', '#', ' ':
 			fallthrough

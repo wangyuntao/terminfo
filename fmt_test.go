@@ -17,7 +17,7 @@ func TestFmt(t *testing.T) {
 	}
 }
 
-func TestFmt2(t *testing.T) {
+func TestFmtColor(t *testing.T) {
 	eseq := []byte("\\E[%?%p1%{8}%<%t3%p1%d%e%p1%{16}%<%t9%p1%{8}%-%d%e38;5;%p1%d%;m")
 
 	for i := 0; i < 8; i++ {
