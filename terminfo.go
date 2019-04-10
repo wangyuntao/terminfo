@@ -1,6 +1,7 @@
 package terminfo
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -85,27 +86,76 @@ func (ti *Terminfo) GetExtStr(s string) ([]byte, bool) {
 	return nil, false
 }
 
-func (ti *Terminfo) Sprintf(scap int, a ...interface{}) ([]byte, error) {
-	s, ok := ti.GetStr(scap)
+func (ti *Terminfo) Sput(cap int, a ...interface{}) ([]byte, error) {
+	b, ok := ti.GetStr(cap)
 	if !ok {
-		return nil, fmt.Errorf("str cap absent: %d", scap)
+		return nil, fmt.Errorf("str cap absent: %d", cap)
 	}
 
-	b, err := Sprintf(s, a...)
+	b, err := Fmt(b, a...)
 	if err == io.EOF {
 		err = io.ErrUnexpectedEOF
 	}
 	return b, err
 }
 
-func (ti *Terminfo) Fprintf(w io.Writer, scap int, a ...interface{}) (int, error) {
-	b, err := ti.Sprintf(scap, a...)
+func (ti *Terminfo) Fput(w io.Writer, cap int, a ...interface{}) error {
+	b, err := ti.Sput(cap, a...)
 	if err != nil {
-		return 0, err
+		return err
 	}
-	return w.Write(b)
+	_, err = w.Write(b)
+	return err
 }
 
-func (ti *Terminfo) Printf(scap int, a ...interface{}) (int, error) {
-	return ti.Fprintf(os.Stdout, scap, a...)
+func (ti *Terminfo) Put(cap int, a ...interface{}) error {
+	return ti.Fput(os.Stdout, cap, a...)
+}
+
+func (ti *Terminfo) ClearScreen() error {
+	return ti.Put(ClearScreen)
+}
+
+func (ti *Terminfo) Cursor(row, col int) error {
+	return ti.Put(CursorAddress, row, col)
+}
+
+func (ti *Terminfo) Color(fg, bg int) error {
+	mc, ok := ti.GetNum(MaxColors)
+	if !ok {
+		return errors.New("no MaxColors cap")
+	}
+
+	if fg != ColorDefault {
+		if fg < 0 || fg >= mc {
+			return errors.New("illegal fg color")
+		}
+		err := ti.Put(SetAForeground, fg)
+		if err != nil {
+			return err
+		}
+	}
+
+	if bg != ColorDefault {
+		if bg < 0 || bg >= mc {
+			return errors.New("illegal bg color")
+		}
+		err := ti.Put(SetABackground, bg)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (ti *Terminfo) ColorFg(fg int) error {
+	return ti.Color(fg, ColorDefault)
+}
+
+func (ti *Terminfo) ColorBg(bg int) error {
+	return ti.Color(ColorDefault, bg)
+}
+
+func (ti *Terminfo) ColorReset() error {
+	return ti.Put(OrigPair)
 }

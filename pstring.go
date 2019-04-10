@@ -8,7 +8,7 @@ import (
 )
 
 // https://invisible-island.net/ncurses/man/terminfo.5.html#h3-Parameterized-Strings
-func Sprintf(format []byte, params ...interface{}) ([]byte, error) {
+func Fmt(format []byte, params ...interface{}) ([]byte, error) {
 	in := bytes.NewReader(format)
 	out := new(bytes.Buffer)
 
@@ -19,6 +19,9 @@ func Sprintf(format []byte, params ...interface{}) ([]byte, error) {
 	for {
 		b, err := in.ReadByte()
 		if err == io.EOF {
+			if !stack.isEmpty() {
+				return nil, errors.New("stack not empty") // TODO ignore it?
+			}
 			return out.Bytes(), nil
 		}
 
@@ -146,7 +149,7 @@ func Sprintf(format []byte, params ...interface{}) ([]byte, error) {
 			if err != nil {
 				return nil, err
 			}
-			stack.push(n1 - n2)
+			stack.push(n2 - n1)
 
 		case '*':
 			n1, n2, err := stack.popN2()
@@ -160,14 +163,14 @@ func Sprintf(format []byte, params ...interface{}) ([]byte, error) {
 			if err != nil {
 				return nil, err
 			}
-			stack.push(n1 / n2)
+			stack.push(n2 / n1)
 
 		case 'm':
 			n1, n2, err := stack.popN2()
 			if err != nil {
 				return nil, err
 			}
-			stack.push(n1 % n2)
+			stack.push(n2 % n1)
 
 		case '&':
 			n1, n2, err := stack.popN2()
@@ -206,7 +209,7 @@ func Sprintf(format []byte, params ...interface{}) ([]byte, error) {
 			if err != nil {
 				return nil, err
 			}
-			if n1 < n2 {
+			if n2 < n1 {
 				stack.push(1)
 			} else {
 				stack.push(0)
@@ -217,7 +220,7 @@ func Sprintf(format []byte, params ...interface{}) ([]byte, error) {
 			if err != nil {
 				return nil, err
 			}
-			if n1 > n2 {
+			if n2 > n1 {
 				stack.push(1)
 			} else {
 				stack.push(0)

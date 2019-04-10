@@ -13,21 +13,22 @@ func main() {
 		log.Fatal(err)
 	}
 
-	fmt.Println("name:", ti.Name())
-	fmt.Println("path:", ti.Path())
-	fmt.Println("desc:", ti.Desc())
-
-	if s, ok := ti.GetStr(terminfo.ClearScreen); ok {
-		fmt.Print(string(s))
-	} else {
-		log.Fatal("Absent")
-	}
-
-	_, err = ti.Printf(terminfo.CursorAddress, 20, 50)
+	err = ti.ClearScreen()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	fmt.Println("Hello, World!")
+	err = ti.ColorFg(terminfo.Red)
+	if err != nil {
+		log.Fatal(err)
+	}
 
+	fmt.Println("hello")
+
+	err = ti.ColorReset()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println("world")
 }

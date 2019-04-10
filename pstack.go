@@ -16,6 +16,10 @@ func newStack() *stack {
 	}
 }
 
+func (s *stack) isEmpty() bool {
+	return s.len == 0
+}
+
 func (s *stack) push(i interface{}) {
 	if s.len >= len(s.items) {
 		s.items = append(s.items, 0, 0, 0, 0)
