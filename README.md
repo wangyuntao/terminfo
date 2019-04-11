@@ -4,9 +4,8 @@ A terminfo library for Go
 
 ## Example
 
-```
-go run [_example/random.go][_example/random.go]
-```
+go run [_example/random.go](_example/random.go)
+
 ![random](_example/random.png)
 
 ## References
