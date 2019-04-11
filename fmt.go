@@ -8,6 +8,10 @@ import (
 )
 
 var (
+	errCapEscapeSeq = errors.New("illegal escape sequence")
+)
+
+var (
 	dvars [26]interface{}
 	svars [26]interface{}
 )
@@ -20,7 +24,7 @@ func (ti *Terminfo) Fmt(cap int, a ...interface{}) ([]byte, error) {
 
 	b, err := Fmt(b, a...)
 	if err == io.EOF {
-		err = ErrCapEscapeSeq
+		err = errCapEscapeSeq
 	}
 	return b, err
 }

@@ -164,7 +164,8 @@ func parseStr(r *Reader, nOffset, stSize int, ti *Terminfo) error {
 		}
 
 		if idx == 0 {
-			return errors.New("str val is empty")
+			// return errors.New("str val is empty")
+			continue // TODO return error?
 		}
 
 		ti.strs[i] = st[offset : offset+idx]

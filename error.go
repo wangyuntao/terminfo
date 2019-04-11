@@ -5,6 +5,5 @@ import (
 )
 
 var (
-	ErrCapAbsent    = errors.New("capability absent")
-	ErrCapEscapeSeq = errors.New("illegal escape sequence")
+	ErrCapAbsent = errors.New("capability absent")
 )
