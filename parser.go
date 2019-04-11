@@ -12,6 +12,7 @@ const (
 	maxFileSize = 32768
 )
 
+// https://invisible-island.net/ncurses/man/term.5.html
 func Parse(bs []byte, term, filepath string) (*Terminfo, error) {
 	if len(bs) > maxFileSize {
 		return nil, fmt.Errorf("exceed file size limit %d", len(bs))
