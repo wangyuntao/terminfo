@@ -1,4 +1,5 @@
 # terminfo
+[![GoDoc](https://godoc.org/github.com/wangyuntao/terminfo?status.svg)](http://godoc.org/github.com/wangyuntao/terminfo)
 
 A terminfo library for Go
 
