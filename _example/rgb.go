@@ -11,7 +11,7 @@ func main() {
 	ti, err := terminfo.LoadEnv()
 	failIfErr(err)
 
-	n := 26
+	n := 25
 	for r := 0; r < 256; r += n {
 		for g := 0; g < 256; g += n {
 			for b := 0; b < 256; b += n {
