@@ -6,7 +6,11 @@ A terminfo library for Go
 
 go run [_example/random.go](_example/random.go)
 
-![random](_example/random.png)
+![](_example/random.png)
+
+go run [_example/rgb.go](_example/rgb.go)
+
+![](_example/rgb.png)
 
 ## References
 
