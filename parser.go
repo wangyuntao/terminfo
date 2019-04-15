@@ -56,6 +56,12 @@ func Parse(bs []byte, term, filepath string) (*Terminfo, error) {
 		return nil, err
 	}
 
+	w, err := TermFileOut()
+	if err != nil {
+		return nil, err
+	}
+	ti.w = w
+
 	return ti, nil
 }
 

@@ -1,5 +1,7 @@
 package terminfo
 
+import "io"
+
 type Terminfo struct {
 	name string
 	path string
@@ -19,6 +21,8 @@ type Terminfo struct {
 
 	extStrs     [][]byte
 	extStrNames map[string]int
+
+	w io.Writer
 }
 
 func (ti *Terminfo) Name() string {
@@ -77,4 +81,8 @@ func (ti *Terminfo) GetExtStr(s string) ([]byte, bool) {
 		return s, s != nil
 	}
 	return nil, false
+}
+
+func (ti *Terminfo) DefaultWriter(w io.Writer) {
+	ti.w = w
 }
