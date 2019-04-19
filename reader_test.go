@@ -5,17 +5,17 @@ import (
 	"testing"
 )
 
-func newTestReader(n int) *Reader {
+func newTestReader(n int) *reader {
 	b := make([]byte, n)
 	for i := 0; i < n; i++ {
 		b[i] = byte(i + 1)
 	}
-	return NewReader(b)
+	return newReader(b)
 }
 
 func TestLen(t *testing.T) {
 	r := newTestReader(2)
-	if r.Len() != 2 {
+	if r.len() != 2 {
 		t.Fail()
 	}
 }
@@ -23,7 +23,7 @@ func TestLen(t *testing.T) {
 func TestReadBytes(t *testing.T) {
 	r := newTestReader(4)
 
-	b, err := r.ReadBytes(2)
+	b, err := r.readBytes(2)
 	if err != nil {
 		t.Fail()
 	}
@@ -32,7 +32,7 @@ func TestReadBytes(t *testing.T) {
 		t.Fail()
 	}
 
-	b, err = r.ReadBytes(2)
+	b, err = r.readBytes(2)
 	if err != nil {
 		t.Fail()
 	}
@@ -41,7 +41,7 @@ func TestReadBytes(t *testing.T) {
 		t.Fail()
 	}
 
-	if r.Len() != 0 {
+	if r.len() != 0 {
 		t.Fail()
 	}
 }
@@ -49,7 +49,7 @@ func TestReadBytes(t *testing.T) {
 func TestReadInts(t *testing.T) {
 	r := newTestReader(6)
 
-	a, err := r.ReadInt16s(1)
+	a, err := r.readInt16s(1)
 	if err != nil {
 		t.Fail()
 	}
@@ -58,7 +58,7 @@ func TestReadInts(t *testing.T) {
 		t.Fail()
 	}
 
-	a, err = r.ReadInt32s(1)
+	a, err = r.readInt32s(1)
 	if err != nil {
 		t.Fail()
 	}
@@ -67,7 +67,7 @@ func TestReadInts(t *testing.T) {
 		t.Fail()
 	}
 
-	if r.Len() != 0 {
+	if r.len() != 0 {
 		t.Fail()
 	}
 }

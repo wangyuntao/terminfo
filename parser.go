@@ -14,13 +14,13 @@ const (
 )
 
 // https://invisible-island.net/ncurses/man/term.5.html
-func Parse(bs []byte, term, filepath string) (*Terminfo, error) {
+func parse(bs []byte, term, filepath string) (*Terminfo, error) {
 	if len(bs) > maxFileSize {
 		return nil, fmt.Errorf("exceed file size limit %d", len(bs))
 	}
 
 	ti := &Terminfo{name: term, path: filepath}
-	r := NewReader(bs)
+	r := newReader(bs)
 
 	hdr, err := parseHeader(r)
 	if err != nil {
@@ -61,8 +61,8 @@ func Parse(bs []byte, term, filepath string) (*Terminfo, error) {
 	return ti, nil
 }
 
-func parseHeader(r *Reader) ([]int, error) {
-	hdr, err := r.ReadInt16s(6)
+func parseHeader(r *reader) ([]int, error) {
+	hdr, err := r.readInt16s(6)
 	if err != nil {
 		return nil, err
 	}
@@ -75,12 +75,12 @@ func parseHeader(r *Reader) ([]int, error) {
 	return hdr, nil
 }
 
-func parseName(r *Reader, size int, ti *Terminfo) error {
+func parseName(r *reader, size int, ti *Terminfo) error {
 	if size <= 0 {
 		return errors.New("Illegal name size")
 	}
 
-	bs, err := r.ReadBytes(size)
+	bs, err := r.readBytes(size)
 	if err != nil {
 		return err
 	}
@@ -94,12 +94,12 @@ func parseName(r *Reader, size int, ti *Terminfo) error {
 	return nil
 }
 
-func parseBool(r *Reader, size int, ti *Terminfo) error {
+func parseBool(r *reader, size int, ti *Terminfo) error {
 	if size < 0 {
 		return fmt.Errorf("illegal bool size: %d", size)
 	}
 
-	bs, err := r.ReadBytes(size)
+	bs, err := r.readBytes(size)
 	if err != nil {
 		return err
 	}
@@ -112,12 +112,12 @@ func parseBool(r *Reader, size int, ti *Terminfo) error {
 	return nil
 }
 
-func parseNum(r *Reader, size, byteSize int, ti *Terminfo) error {
+func parseNum(r *reader, size, byteSize int, ti *Terminfo) error {
 	if size < 0 {
 		return fmt.Errorf("illegal num size: %d", size)
 	}
 
-	nums, err := r.ReadInts(size, byteSize)
+	nums, err := r.readInts(size, byteSize)
 	if err != nil {
 		return err
 	}
@@ -131,7 +131,7 @@ func parseNum(r *Reader, size, byteSize int, ti *Terminfo) error {
 	return nil
 }
 
-func parseStr(r *Reader, nOffset, stSize int, ti *Terminfo) error {
+func parseStr(r *reader, nOffset, stSize int, ti *Terminfo) error {
 	if nOffset < 0 {
 		return fmt.Errorf("illegal string offset size: %d", nOffset)
 	}
@@ -140,12 +140,12 @@ func parseStr(r *Reader, nOffset, stSize int, ti *Terminfo) error {
 		return errors.New("Illegal string table size")
 	}
 
-	offsets, err := r.ReadInt16s(nOffset)
+	offsets, err := r.readInt16s(nOffset)
 	if err != nil {
 		return err
 	}
 
-	st, err := r.ReadBytes(stSize)
+	st, err := r.readBytes(stSize)
 	if err != nil {
 		return err
 	}
@@ -175,12 +175,12 @@ func parseStr(r *Reader, nOffset, stSize int, ti *Terminfo) error {
 	return nil
 }
 
-func parseExt(r *Reader, ti *Terminfo, numByteSize int) error {
+func parseExt(r *reader, ti *Terminfo, numByteSize int) error {
 	if r.isEmpty() {
 		return nil
 	}
 
-	hdr, err := r.ReadInt16s(5)
+	hdr, err := r.readInt16s(5)
 	if err != nil {
 		return err
 	}
@@ -212,12 +212,12 @@ func parseExt(r *Reader, ti *Terminfo, numByteSize int) error {
 	return nil
 }
 
-func parseExtBool(r *Reader, size int, ti *Terminfo) error {
+func parseExtBool(r *reader, size int, ti *Terminfo) error {
 	if size < 0 {
 		return errors.New("Illegal ext bool size")
 	}
 
-	bs, err := r.ReadBytes(size)
+	bs, err := r.readBytes(size)
 	if err != nil {
 		return err
 	}
@@ -230,12 +230,12 @@ func parseExtBool(r *Reader, size int, ti *Terminfo) error {
 	return nil
 }
 
-func parseExtNum(r *Reader, size, byteSize int, ti *Terminfo) error {
+func parseExtNum(r *reader, size, byteSize int, ti *Terminfo) error {
 	if size < 0 {
 		return errors.New("Illegal ext num size")
 	}
 
-	nums, err := r.ReadInts(size, byteSize)
+	nums, err := r.readInts(size, byteSize)
 	if err != nil {
 		return err
 	}
@@ -249,7 +249,7 @@ func parseExtNum(r *Reader, size, byteSize int, ti *Terminfo) error {
 	return nil
 }
 
-func parseExtStrAndNames(r *Reader, cbool, cnum, cstr, stSize int, ti *Terminfo) error {
+func parseExtStrAndNames(r *reader, cbool, cnum, cstr, stSize int, ti *Terminfo) error {
 	if cstr < 0 {
 		return errors.New("Illegal ext string offset size")
 	}
@@ -258,27 +258,27 @@ func parseExtStrAndNames(r *Reader, cbool, cnum, cstr, stSize int, ti *Terminfo)
 		return errors.New("Illegal ext string table size")
 	}
 
-	strOffsets, err := r.ReadInt16s(cstr)
+	strOffsets, err := r.readInt16s(cstr)
 	if err != nil {
 		return err
 	}
 
-	boolNameOffsets, err := r.ReadInt16s(cbool)
+	boolNameOffsets, err := r.readInt16s(cbool)
 	if err != nil {
 		return err
 	}
 
-	numNameOffsets, err := r.ReadInt16s(cnum)
+	numNameOffsets, err := r.readInt16s(cnum)
 	if err != nil {
 		return err
 	}
 
-	strNameOffsets, err := r.ReadInt16s(cstr)
+	strNameOffsets, err := r.readInt16s(cstr)
 	if err != nil {
 		return err
 	}
 
-	st, err := r.ReadBytes(stSize)
+	st, err := r.readBytes(stSize)
 	if err != nil {
 		return err
 	}
