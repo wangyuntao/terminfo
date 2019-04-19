@@ -19,7 +19,7 @@ func parse(bs []byte, term, filepath string) (*Terminfo, error) {
 		return nil, fmt.Errorf("exceed file size limit %d", len(bs))
 	}
 
-	ti := &Terminfo{name: term, path: filepath}
+	ti := &Terminfo{name: term, path: filepath, w: os.Stdout}
 	r := newReader(bs)
 
 	hdr, err := parseHeader(r)
@@ -57,7 +57,6 @@ func parse(bs []byte, term, filepath string) (*Terminfo, error) {
 		return nil, err
 	}
 
-	ti.w = os.Stdout
 	return ti, nil
 }
 

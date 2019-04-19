@@ -16,3 +16,11 @@ func (ti *Terminfo) FmtTo(w io.Writer, cap int, a ...interface{}) error {
 	_, err = w.Write(b)
 	return err
 }
+
+func (ti *Terminfo) EnterCaMode() error {
+	return ti.Do(EnterCaMode)
+}
+
+func (ti *Terminfo) ExitCaMode() error {
+	return ti.Do(ExitCaMode)
+}

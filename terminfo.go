@@ -83,6 +83,6 @@ func (ti *Terminfo) GetExtStr(s string) ([]byte, bool) {
 	return nil, false
 }
 
-func (ti *Terminfo) DefaultWriter(w io.Writer) {
+func (ti *Terminfo) Writer(w io.Writer) {
 	ti.w = w
 }
