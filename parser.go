@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"os"
 )
 
 const (
@@ -56,12 +57,7 @@ func Parse(bs []byte, term, filepath string) (*Terminfo, error) {
 		return nil, err
 	}
 
-	w, err := TermFileOut()
-	if err != nil {
-		return nil, err
-	}
-	ti.w = w
-
+	ti.w = os.Stdout
 	return ti, nil
 }
 

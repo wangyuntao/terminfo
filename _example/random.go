@@ -9,8 +9,16 @@ import (
 	"github.com/wangyuntao/terminfo"
 )
 
+const (
+	rows = 10
+	cols = 100
+)
+
 func main() {
 	ti, err := terminfo.LoadEnv()
+	failIfErr(err)
+
+	err = ti.ClearScreen()
 	failIfErr(err)
 
 	for {
@@ -21,23 +29,18 @@ func main() {
 }
 
 func refresh(ti *terminfo.Terminfo) error {
-	row, col, err := terminfo.TermSize()
-	if err != nil {
-		return err
-	}
-
 	maxColors, ok := ti.GetNum(terminfo.MaxColors)
 	if !ok {
 		return terminfo.ErrCapAbsent
 	}
 
-	for r := 0; r < row; r++ {
-		err = ti.CursorAddress(r, 0)
+	for r := 0; r < rows; r++ {
+		err := ti.CursorAddress(r, 0)
 		if err != nil {
 			return err
 		}
 
-		for c := 0; c < col; c++ {
+		for c := 0; c < cols; c++ {
 			err = ti.ColorFg(rand.Intn(maxColors))
 			if err != nil {
 				return err
