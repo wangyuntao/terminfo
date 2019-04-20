@@ -115,6 +115,18 @@ func (t *Text) Do() error {
 	return nil
 }
 
+func (t *Text) Exit() error {
+	// TODO ?
+	// if t.underline {
+	// 	err := t.ti.Do(ExitUnderlineMode)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// }
+
+	return t.ti.ExitAttributeMode()
+}
+
 func (t *Text) Print(a ...interface{}) error {
 	err := t.Do()
 	if err != nil {
@@ -124,7 +136,7 @@ func (t *Text) Print(a ...interface{}) error {
 	if err != nil {
 		return err
 	}
-	return t.ti.ExitAttributeMode()
+	return t.Exit()
 }
 
 func (t *Text) Println(a ...interface{}) error {
@@ -136,7 +148,7 @@ func (t *Text) Println(a ...interface{}) error {
 	if err != nil {
 		return err
 	}
-	return t.ti.ExitAttributeMode()
+	return t.Exit()
 }
 
 func (t *Text) Printf(format string, a ...interface{}) error {
@@ -148,5 +160,5 @@ func (t *Text) Printf(format string, a ...interface{}) error {
 	if err != nil {
 		return err
 	}
-	return t.ti.ExitAttributeMode()
+	return t.Exit()
 }
