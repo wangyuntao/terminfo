@@ -24,6 +24,10 @@ func (ti *Terminfo) EnterBoldMode() error {
 	return ti.Do(EnterBoldMode)
 }
 
+func (ti *Terminfo) EnterItalicsMode() error {
+	return ti.Do(EnterItalicsMode)
+}
+
 func (ti *Terminfo) ExitAttributeMode() error {
 	return ti.Do(ExitAttributeMode)
 }

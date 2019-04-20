@@ -28,6 +28,9 @@ func main() {
 
 	err = bold(ti)
 	failIfErr(err)
+
+	err = italics(ti)
+	failIfErr(err)
 }
 
 func standout(ti *terminfo.Terminfo) error {
@@ -81,6 +84,15 @@ func bold(ti *terminfo.Terminfo) error {
 		return err
 	}
 	fmt.Println("bold")
+	return ti.ExitAttributeMode()
+}
+
+func italics(ti *terminfo.Terminfo) error {
+	err := ti.EnterItalicsMode()
+	if err != nil {
+		return err
+	}
+	fmt.Println("italics")
 	return ti.ExitAttributeMode()
 }
 
