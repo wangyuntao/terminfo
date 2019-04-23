@@ -22,7 +22,8 @@ type Terminfo struct {
 	extStrs     [][]byte
 	extStrNames map[string]int
 
-	w io.Writer
+	w0 io.Writer
+	w  io.Writer
 }
 
 func (ti *Terminfo) Name() string {
@@ -84,5 +85,10 @@ func (ti *Terminfo) GetExtStr(s string) ([]byte, bool) {
 }
 
 func (ti *Terminfo) Writer(w io.Writer) {
+	ti.w0 = ti.w
 	ti.w = w
+}
+
+func (ti *Terminfo) RestoreWriter() {
+	ti.w = ti.w0
 }
