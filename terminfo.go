@@ -89,7 +89,7 @@ func (ti *Terminfo) Writer(w io.Writer) {
 	ti.w = w
 }
 
-func (ti *Terminfo) RestoreWriter() {
+func (ti *Terminfo) WriterRestore() {
 	i := len(ti.ws) - 1
 	ti.w = ti.ws[i]
 	ti.ws = ti.ws[:i]
